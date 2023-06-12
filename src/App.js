@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
 import blogService from './services/blogs'
 import loginService from './services/login'
-import login from './services/login'
+import Notification from './components/Notification'
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
 
-  const [errorMessage,setErrorMessage] = useState(null)
+  const [message,setMessage] = useState(null)
+	// const [messageClass, setMessageClass] = useState(null)
 
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -39,16 +40,35 @@ const App = () => {
       setUsername('')
       setPassword('')
     } catch (exception){
-      setErrorMessage('Wrong Credentials')
+      setMessage({content: 'Wrong username or password', type:'error'})
+			console.log(message);
       setTimeout(() => {
-        setErrorMessage(null)
+        setMessage(null)
       },5000)
     }
   }
 
+
   const createBlog =  async (event) => {
     event.preventDefault()
-    
+		const blogObj = {
+			title,
+			author,
+			url
+		}
+
+		blogService.setToken(user.token)
+    const savedBlog = await blogService.create(blogObj)
+		setBlogs(blogs.concat(savedBlog))
+		const infoMessage = `a new blog ${title} by ${author} added`
+		setTitle('')
+		setAuthor('')
+		setUrl('')
+		setMessage({content: infoMessage, type:'info'})
+      setTimeout(() => {
+        setMessage(null)
+      },5000)
+		
   }
 
   const loginForm = () => (
@@ -75,7 +95,7 @@ const App = () => {
   )
 
   const blogForm = () => (
-    <form>
+    <form onSubmit={createBlog}>
       <div>
         title: <input 
           name="Title"
@@ -104,6 +124,8 @@ const App = () => {
   return (
     <div>
       <h2>blogs</h2>
+			<Notification message={message} messageClass />
+
       {!user && loginForm()}
       {user && (
         <div>
